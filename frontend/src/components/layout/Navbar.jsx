@@ -2,9 +2,10 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-// import { MapPin } from 'lucide-react'; // <-- REMOVED
+import { ShoppingCart } from 'lucide-react'; // Added lucide-react icon
 
-const Navbar = () => {
+// ADDED new props: onCartClick, cartItemCount
+const Navbar = ({ onCartClick, cartItemCount }) => {
   const { isAuthenticated, role, logout, user } = useAuth();
   const navigate = useNavigate();
 
@@ -46,6 +47,22 @@ const Navbar = () => {
             {/* Bağlantı Metni Çevirisi */}
             Restoranlar
           </Link>
+          
+          {/* Added Cart Button for Customers */}
+          {role === 'customer' && (
+            <button
+                onClick={onCartClick}
+                className="relative p-2 text-white hover:text-secondary-light transition duration-200"
+                title="Sepetim"
+            >
+                <ShoppingCart size={24} />
+                {cartItemCount > 0 && (
+                    <span className="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-red-100 transform translate-x-1/2 -translate-y-1/2 bg-red-600 rounded-full">
+                        {cartItemCount}
+                    </span>
+                )}
+            </button>
+          )}
 
           {isAuthenticated ? (
             // Authenticated section starts here

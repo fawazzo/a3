@@ -81,8 +81,19 @@ const MenuManagement = () => {
                 <h2 className="text-2xl font-bold text-primary-dark mb-4">Mevcut Menü ({menuItems.length})</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {menuItems.map(item => (
-                        <div key={item._id} className="p-4 border rounded-lg flex justify-between items-center bg-secondary-light">
-                            <div>
+                        <div key={item._id} className="p-4 border rounded-lg flex items-center bg-secondary-light">
+                            {/* ADDED: Image Display */}
+                            {item.imageUrl && (
+                                <div className="w-16 h-16 flex-shrink-0 mr-4">
+                                    <img 
+                                        src={item.imageUrl} 
+                                        alt={item.name} 
+                                        className="w-full h-full object-cover rounded-lg"
+                                    />
+                                </div>
+                            )}
+
+                            <div className="flex-grow">
                                 <h3 className="font-bold text-lg">{item.name}</h3>
                                 {/* Fiyat ve Kategori zaten formda çevrildi */}
                                 <p className="text-sm text-gray-600">{item.price} TL | {item.category}</p>
@@ -91,7 +102,8 @@ const MenuManagement = () => {
                                     {item.isAvailable ? 'Mevcut' : 'Mevcut Değil'}
                                 </span>
                             </div>
-                            <div className="space-x-2">
+                            
+                            <div className="flex-shrink-0 space-x-2 ml-4">
                                 <button 
                                     onClick={() => setEditingItem(item)}
                                     className="text-sm py-1 px-3 rounded-md bg-blue-500 text-white hover:bg-blue-600"

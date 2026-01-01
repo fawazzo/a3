@@ -1,14 +1,14 @@
 // src/App.jsx
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Navbar from './components/layout/Navbar';
 import Footer from './components/layout/Footer';
 
 // Pages - Public
-import Home from './components/public/Home'; // Corrected import path (assuming structure)
-import RestaurantDetail from './components/public/RestaurantDetail'; // Corrected import path (assuming structure)
+import Home from './components/public/Home'; 
+import RestaurantDetail from './components/public/RestaurantDetail'; 
 
 // Pages - Auth
 import CustomerLogin from './pages/auth/CustomerLogin';
@@ -22,7 +22,7 @@ import CustomerOrders from './pages/customer/CustomerOrders';
 import RestaurantDashboard from './pages/restaurant/RestaurantDashboard';
 import MenuManagement from './pages/restaurant/MenuManagement';
 
-// New Global Components
+// Global Components
 import GlobalCartModal from './components/public/GlobalCartModal';
 
 import './App.css';
@@ -47,11 +47,12 @@ const ProtectedRoute = ({ element, requiredRole }) => {
 
 // --- Global App Content with Cart State ---
 const AppContent = () => {
-    const { role, isAuthenticated, user, logout } = useAuth();
+    const { role, isAuthenticated, user } = useAuth();
     const [isCartOpen, setIsCartOpen] = useState(false);
     const [cart, setCart] = useState([]); // Global Cart State
+    const navigate = useNavigate();
 
-    // --- Local Storage and Data Persistence (Mock) ---
+    // --- Local Storage and Data Persistence ---
     useEffect(() => {
         // Load cart from local storage on initial load
         const localCart = JSON.parse(localStorage.getItem('a2_global_cart') || '[]');
@@ -65,19 +66,23 @@ const AppContent = () => {
     
     const getTotalItems = () => cart.reduce((total, item) => total + item.quantity, 0);
 
-    // --- Global Cart Logic ---
+    // --- Global Cart Logic (Updated for Quantity) ---
     const addToCart = (item) => {
         
+        // Use the quantity provided by the detail page, default to 1 if missing
+        const quantityToAdd = item.initialQuantity || 1; 
+
         // 1. Check permissions
+        // Metin Çevirisi
         if (role === 'restaurant') return alert("Restoran sahipleri sipariş veremez.");
         
         // --- DATA SAFETY CHECK & EXTRACTION ---
-        // item object passed from RestaurantDetail must contain: _id, restaurantId, name, price
         const itemId = item._id;
         const itemRestaurantId = item.restaurantId;
         const itemPrice = item.price || 0; 
         
         if (!itemId || !itemRestaurantId) {
+            // Metin Çevirisi
             console.error("Attempted to add item without required _id or restaurantId:", item);
             alert("Ürün bilgileri eksik (ID veya Restoran ID).");
             return;
@@ -87,6 +92,7 @@ const AppContent = () => {
         
         // 2. Cross-restaurant validation
         if (cart.length > 0 && cart[0].restaurantId !== itemRestaurantId) {
+            // Metin Çevirisi
             if (!window.confirm("Sepetinizde başka bir restorandan ürün var. Yeni siparişle değiştirmek ister misiniz?")) {
                 return;
             }
@@ -96,7 +102,7 @@ const AppContent = () => {
                 _id: itemId, 
                 restaurantId: itemRestaurantId, 
                 price: itemPrice, 
-                quantity: 1 
+                quantity: quantityToAdd 
             }]);
             return;
         }
@@ -106,9 +112,10 @@ const AppContent = () => {
             const existingItem = prevCart.find(cartItem => cartItem._id === itemId);
             
             if (existingItem) {
+                // If exists, add the new quantity
                 return prevCart.map(cartItem =>
                     cartItem._id === itemId
-                        ? { ...cartItem, quantity: cartItem.quantity + 1 }
+                        ? { ...cartItem, quantity: cartItem.quantity + quantityToAdd }
                         : cartItem
                 );
             } else {
@@ -118,11 +125,13 @@ const AppContent = () => {
                     _id: itemId, 
                     restaurantId: itemRestaurantId, 
                     price: itemPrice, 
-                    quantity: 1 
+                    quantity: quantityToAdd 
                 }];
             }
         });
     };
+    // --- End Global Cart Logic ---
+
 
     const updateQuantity = (itemId, newQuantity) => {
         if (newQuantity <= 0) {
@@ -141,12 +150,20 @@ const AppContent = () => {
     };
 
 
-    // --- Global Checkout Logic ---
-    const handleGlobalCheckout = async () => {
+    // --- Global Checkout Logic (Updated to accept paymentMethod) ---
+    const handleGlobalCheckout = async (paymentMethod) => { 
+        
+        // Metin Çevirisi
         if (!isAuthenticated || role !== 'customer') {
             alert("Sipariş vermek için lütfen müşteri olarak giriş yapın.");
             return;
         }
+        
+        // Log the selected payment method (as requested, since it's "fake")
+        console.log("Selected Payment Method:", paymentMethod);
+        // Alert the user about the payment method selection
+        alert(`Ödeme Yöntemi Seçildi: ${paymentMethod === 'credit_card' ? 'Kredi Kartı' : 'Kapıda Ödeme'}. Sipariş işleniyor...`);
+
 
         if (cart.length === 0) return;
 
@@ -157,6 +174,7 @@ const AppContent = () => {
         
         // Use fullAddress, fallback to ilce/il
         let customerAddress = user.fullAddress || (user.ilce && user.il ? `${user.ilce}, ${user.il}` : undefined);
+        // Metin Çevirisi
         if (!customerAddress) {
             alert("Sipariş vermeden önce lütfen müşteri profilinizi geçerli bir adresle güncelleyin.");
             return;
@@ -168,18 +186,21 @@ const AppContent = () => {
                 restaurantId: cart[0].restaurantId, 
                 orderItems: orderItems,
                 customerAddress: customerAddress,
+                // OPTIONAL: Add paymentMethod to orderData if the backend supported it
             };
 
             const { data } = await axios.post('/api/orders', orderData);
             
+            // Metin Çevirisi
             alert(`Sipariş başarıyla verildi! Toplam: ${data.totalAmount} TL. Durum: ${data.status}`);
             setCart([]); // Clear cart state
             localStorage.removeItem('a2_global_cart'); // Clear local storage cart
             setIsCartOpen(false); // Close modal
-            // Navigate to orders page after successful checkout
-            Navigate('/customer/orders'); 
+            // Use navigate function from hook
+            navigate('/customer/orders'); 
 
         } catch (err) {
+            // Metin Çevirisi
             alert(`Sipariş başarısız oldu: ${err.response?.data?.message || 'Bilinmeyen bir hata oluştu.'}`);
         }
     };
@@ -249,7 +270,7 @@ const AppContent = () => {
                     cart={cart}
                     updateQuantity={updateQuantity}
                     removeFromCart={removeFromCart}
-                    handleCheckout={handleGlobalCheckout}
+                    handleCheckout={handleGlobalCheckout} // Now passes paymentMethod
                     onClose={() => setIsCartOpen(false)}
                 />
             )}

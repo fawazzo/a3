@@ -23,7 +23,7 @@ const menuItemSchema = mongoose.Schema(
       type: String,
       required: true,
       // Example categories
-      enum: ['Main Dish', 'Appetizer', 'Dessert', 'Drink', 'Side'],
+      enum: ['Ana Yemek', 'Başlangıç', 'Tatlı', 'İçecek', 'Yan Lezzet'],
     },
     imageUrl: {
       type: String,
